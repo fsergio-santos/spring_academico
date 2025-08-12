@@ -1,0 +1,114 @@
+public class UsuarioConverter {
+
+    public static Usuario toUsuario(UsuarioRequest usuarioRequest) {
+        Usuario usuario = new Usuario();
+
+        if (ValidarDados.validarId(usuarioRequest.getIdUsuario())) {
+            usuario.setIdUsuario(usuarioRequest.getIdUsuario());
+        }
+
+        usuario.setCodUsuario(usuarioRequest.getCodUsuario());
+        usuario.setNomeUsuario(usuarioRequest.getNomeUsuario());
+        usuario.setEmail(usuarioRequest.getEmail());
+        usuario.setSenha(usuarioRequest.getSenha());
+        usuario.setFoto(usuarioRequest.getFoto());
+        usuario.setTipo(usuarioRequest.getTipo());
+        usuario.setAtivo(usuarioRequest.isAtivo());
+
+        ValidarDados.isNumber(usuarioRequest.getTipo());
+
+        if (usuarioRequest.getTipo() == 1) {
+            validarDadosProfessor(usuarioRequest);
+            Professor professor = criarProfessor(usuarioRequest);
+            usuario.setProfessor(professor);
+        } else {
+            validarDadosAluno(usuarioRequest);
+            Aluno aluno = criarAluno(usuarioRequest);
+            usuario.setAluno(aluno);
+        }
+
+        return usuario;
+    }
+
+    public static UsuarioResponse toUsuarioResponse(Usuario usuario) {
+        String senha = null;  // Senha não será retornada
+        String confirmSenha = null;  // Confirmar senha não será retornada
+
+        Long idAluno = null;
+        String codAluno = null;
+        String nomeAluno = null;
+        Integer idadeAluno = null;
+
+        if (usuario.getAluno() != null) {
+            idAluno = usuario.getAluno().getIdAluno();
+            codAluno = usuario.getAluno().getCodAluno();
+            nomeAluno = usuario.getAluno().getNomeAluno();
+            idadeAluno = usuario.getAluno().getIdade();
+        }
+
+        Long idProfessor = null;
+        String codProfessor = null;
+        String nomeProfessor = null;
+
+        if (usuario.getProfessor() != null) {
+            idProfessor = usuario.getProfessor().getIdProfessor();
+            codProfessor = usuario.getProfessor().getCodProfessor();
+            nomeProfessor = usuario.getProfessor().getNomeProfessor();
+        }
+
+        return new UsuarioResponse(
+                usuario.getIdUsuario(),
+                usuario.getCodUsuario(),
+                usuario.getNomeUsuario(),
+                usuario.getEmail(),
+                senha,
+                usuario.getTipo(),
+                confirmSenha,
+                usuario.getCidade() != null ? usuario.getCidade().getIdCidade() : null,
+                idAluno, codAluno, nomeAluno, idadeAluno,
+                idProfessor, codProfessor, nomeProfessor,
+                usuario.getFoto(),
+                usuario.isAtivo()
+        );
+    }
+
+    protected static void validarDadosProfessor(UsuarioRequest usuario) {
+        validarCampoObrigatorio(usuario.getNomeProfessor(), "Nome do professor");
+        validarCampoObrigatorio(usuario.getCodProfessor(), "Código do professor");
+    }
+
+    protected static void validarDadosAluno(UsuarioRequest usuario) {
+        validarCampoObrigatorio(usuario.getNomeAluno(), "Nome do aluno");
+        validarCampoObrigatorio(usuario.getCodAluno(), "Código do aluno");
+        if (Objects.isNull(usuario.getIdade()) || usuario.getIdade().toString().isBlank()) {
+            throw new UntypedFieldsException(FormatMessage.formatMessage("Idade do aluno não informada %s", usuario.getIdade()));
+        }
+    }
+
+    private static Professor criarProfessor(UsuarioRequest usuario) {
+        Professor professor = new Professor();
+        if (ValidarDados.validarId(usuario.getIdProfessor())) {
+            professor.setIdProfessor(usuario.getIdProfessor());
+        }
+        professor.setNomeProfessor(usuario.getNomeProfessor());
+        professor.setCodProfessor(usuario.getCodProfessor());
+        return professor;
+    }
+
+    private static Aluno criarAluno(UsuarioRequest usuario) {
+        Aluno aluno = new Aluno();
+        if (ValidarDados.validarId(usuario.getIdAluno())) {
+            aluno.setIdAluno(usuario.getIdAluno());
+        }
+        aluno.setCodAluno(usuario.getCodAluno());
+        aluno.setNomeAluno(usuario.getNomeUsuario());
+        aluno.setIdade(usuario.getIdade());
+        return aluno;
+    }
+
+    private static void validarCampoObrigatorio(String campo, String campoNome) {
+        if (Objects.isNull(campo) || campo.isBlank() || campo.isEmpty()) {
+            throw new UntypedFieldsException(FormatMessage.formatMessage("%s não foi informado %s", campoNome, campo));
+        }
+    }
+}
